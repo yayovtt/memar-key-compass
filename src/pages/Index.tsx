@@ -2,7 +2,7 @@
 import React from 'react';
 import Header from '@/components/layout/Header';
 import WidgetCard from '@/components/dashboard/WidgetCard';
-import { BarChart2, Users, Settings, ClipboardList, TrendingUp, Activity } from 'lucide-react';
+import { BarChart2, Users, Settings, ClipboardList, TrendingUp, Activity, UsersRound, ListChecks, Bell } from 'lucide-react';
 
 const Index = () => {
   return (
@@ -33,6 +33,35 @@ const Index = () => {
                </button>
             </WidgetCard>
 
+            {/* New Widgets Start Here */}
+            <WidgetCard title="לקוחות" icon={UsersRound} className="bg-gradient-to-br from-sky-500 to-cyan-600 text-white">
+              <div className="text-3xl font-bold">150</div>
+              <p className="text-sm text-sky-100">לקוחות רשומים</p>
+              <p className="text-xs mt-2 text-sky-200">(לחיצה על לקוח תאפשר גישה לקבצים - דורש חיבור Supabase)</p>
+            </WidgetCard>
+
+            <WidgetCard title="משימות נוספות" icon={ListChecks} className="bg-gradient-to-br from-lime-500 to-emerald-600 text-white">
+              <ul className="space-y-1 text-sm">
+                <li>אישור הצעת מחיר לפרויקט X</li>
+                <li>פגישת מעקב עם לקוח Y</li>
+                <li>סיום משימת עיצוב Z</li>
+              </ul>
+              <p className="text-sm text-lime-100 mt-2">3 משימות ממתינות</p>
+            </WidgetCard>
+
+            <WidgetCard title="תזכורות" icon={Bell} className="bg-gradient-to-br from-rose-500 to-red-600 text-white">
+              <ul className="space-y-1 text-sm">
+                <li>פגישה עם צוות פיתוח - 10:00</li>
+                <li>לתזכר את רוני לגבי חשבונית - מחר</li>
+                <li>יום הולדת לשירה - 29.05</li>
+              </ul>
+               <button className="mt-2 text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-md transition-colors">
+                 הצג הכל
+               </button>
+            </WidgetCard>
+            {/* New Widgets End Here */}
+
+
             <WidgetCard title="ביצועים" icon={TrendingUp} className="lg:col-span-2 bg-card text-card-foreground">
               <div className="text-2xl font-semibold">שיפור של 15%</div>
               <p className="text-sm text-muted-foreground">ברבעון האחרון, ביחס ליעדים.</p>
@@ -58,3 +87,4 @@ const Index = () => {
 };
 
 export default Index;
+
