@@ -3,8 +3,9 @@ import React from 'react';
 import Header from '@/components/layout/Header';
 import ClientFolderCard from '@/components/clients/ClientFolderCard';
 import ClientFoldersPageStatus from '@/components/clients/ClientFoldersPageStatus';
+import BulkClientFolderUploader from '@/components/clients/BulkClientFolderUploader'; // Import the new uploader
 import { useClientFoldersData } from '@/hooks/useClientFoldersData';
-import { Loader2 } from 'lucide-react'; // Ensure Loader2 is imported if needed by status or directly
+// Loader2 is imported by ClientFoldersPageStatus if needed
 
 const ClientFoldersPage: React.FC = () => {
   const {
@@ -15,6 +16,7 @@ const ClientFoldersPage: React.FC = () => {
     isLoadingAllFiles,
     allFilesError,
     isClientsFetched,
+    // refetchClientsAndFiles, // Assuming useClientFoldersData exposes a refetch function or relies on query invalidation
   } = useClientFoldersData();
 
   const pageStatus = (
@@ -28,6 +30,11 @@ const ClientFoldersPage: React.FC = () => {
     />
   );
 
+  const handleBulkUploadComplete = () => {
+    // Data refetching is handled by query invalidation within BulkClientFolderUploader
+    console.log('Bulk upload process finished, data should be refetching.');
+  };
+
   const shouldShowContent = !isLoadingClients && !clientsError && (clientsCount ?? 0) > 0 && !isLoadingAllFiles && !allFilesError;
 
   return (
@@ -36,6 +43,8 @@ const ClientFoldersPage: React.FC = () => {
       <main className="flex-grow p-4 sm:p-6 lg:p-8 container mx-auto">
         <h1 className="text-3xl font-bold text-primary mb-8 text-center sm:text-right">תיקיות לקוחות</h1>
         
+        <BulkClientFolderUploader onUploadComplete={handleBulkUploadComplete} />
+
         {pageStatus}
 
         {shouldShowContent && clientsWithFolders.length > 0 && (
@@ -59,3 +68,4 @@ const ClientFoldersPage: React.FC = () => {
 };
 
 export default ClientFoldersPage;
+
