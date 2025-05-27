@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,8 +12,6 @@ interface ClientFileUploaderProps {
   clientId: string;
   onUploadSuccess: () => void;
 }
-
-// Removed FileWithRelativePath interface, will use built-in File type
 
 const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUploadSuccess }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -32,6 +31,7 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
       toast.error('אנא בחר קובץ אחד או יותר, או תיקייה להעלאה.');
       return;
     }
+    console.log('[ClientUploader] handleUpload: Starting upload. Provided clientId prop:', clientId);
 
     setUploading(true);
     const isFolderUpload = selectedFiles.length > 0 && selectedFiles[0]?.webkitRelativePath && selectedFiles[0].webkitRelativePath.trim() !== "";
@@ -46,12 +46,15 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
     const { data: userSession, error: userError } = await supabase.auth.getUser();
     if (userError || !userSession?.user) {
       toast.error('שגיאת אימות. נסה להתחבר מחדש.');
+      console.error('[ClientUploader] handleUpload: User session error.', userError);
       setUploading(false);
       return;
     }
     const userId = userSession.user.id;
+    console.log('[ClientUploader] handleUpload: userId:', userId, 'using prop clientId:', clientId);
 
     for (const file of selectedFiles) {
+      console.log('[ClientUploader] handleUpload: Processing file:', file.name, 'webkitRelativePath:', file.webkitRelativePath);
       try {
         let storagePathForSupabase: string;
         
@@ -62,27 +65,30 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
           const uniqueFileName = `${uuidv4()}.${fileExtension}`;
           storagePathForSupabase = `${userId}/${clientId}/${uniqueFileName}`;
         }
+        console.log('[ClientUploader] handleUpload: Calculated storagePathForSupabase:', storagePathForSupabase);
         
         const { error: uploadError } = await supabase.storage
           .from('client_files_bucket')
           .upload(storagePathForSupabase, file, { upsert: true });
 
         if (uploadError) {
-          console.error(`Error uploading ${file.webkitRelativePath || file.name} to storage:`, uploadError);
+          console.error(`[ClientUploader] Error uploading ${file.webkitRelativePath || file.name} to storage:`, uploadError);
           throw new Error(`שגיאה בהעלאת הקובץ "${file.webkitRelativePath || file.name}" לאחסון: ${uploadError.message}`);
         }
 
-        const { error: dbError } = await supabase.from('client_files').insert({
-          client_id: clientId,
+        const fileMetadata = {
+          client_id: clientId, // From prop
           user_id: userId,
           file_name: file.name,
           storage_path: storagePathForSupabase,
           file_type: file.type,
           file_size: file.size,
-        });
+        };
+        console.log('[ClientUploader] handleUpload: Attempting to insert file metadata to DB:', fileMetadata);
+        const { error: dbError } = await supabase.from('client_files').insert(fileMetadata);
 
         if (dbError) {
-          console.error(`Error inserting metadata for ${file.webkitRelativePath || file.name} to DB:`, dbError);
+          console.error(`[ClientUploader] Error inserting metadata for ${file.webkitRelativePath || file.name} to DB:`, dbError);
           await supabase.storage.from('client_files_bucket').remove([storagePathForSupabase]);
           throw new Error(`שגיאה בשמירת מידע על הקובץ "${file.webkitRelativePath || file.name}": ${dbError.message}`);
         }
@@ -91,7 +97,7 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
         filesUploadedSuccessfully++;
         onUploadSuccess(); 
       } catch (error: any) {
-        console.error(`Upload process error for ${file.webkitRelativePath || file.name}:`, error);
+        console.error(`[ClientUploader] Upload process error for ${file.webkitRelativePath || file.name}:`, error);
         toast.error(error.message || `אירעה שגיאה במהלך העלאת הקובץ "${file.webkitRelativePath || file.name}".`);
       }
     }

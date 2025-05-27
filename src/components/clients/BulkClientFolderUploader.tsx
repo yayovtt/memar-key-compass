@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -46,27 +47,32 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
   };
   
   const getOrCreateClient = async (clientName: string, userId: string): Promise<string | null> => {
+    console.log('[BulkUploader] getOrCreateClient: Attempting for clientName:', clientName, 'userId:', userId);
     let { data: existingClient, error: fetchError } = await supabase
       .from('clients')
       .select('id')
       .eq('name', clientName)
-      .eq('created_by_user_id', userId) // Ensure client belongs to the current user if it exists
+      .eq('created_by_user_id', userId) 
       .single();
+    console.log('[BulkUploader] getOrCreateClient: existingClient query result:', { existingClient, fetchError });
 
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116: 0 rows
+    if (fetchError && fetchError.code !== 'PGRST116') { 
       toast.error(`שגיאה בבדיקת לקוח קיים "${clientName}": ${fetchError.message}`);
       return null;
     }
 
     if (existingClient) {
+      console.log('[BulkUploader] getOrCreateClient: Found existing client ID:', existingClient.id);
       return existingClient.id;
     }
 
+    console.log('[BulkUploader] getOrCreateClient: No existing client found, creating new one.');
     const { data: newClient, error: insertError } = await supabase
       .from('clients')
       .insert({ name: clientName, created_by_user_id: userId })
       .select('id')
       .single();
+    console.log('[BulkUploader] getOrCreateClient: newClient query result:', { newClient, insertError });
 
     if (insertError) {
       toast.error(`שגיאה ביצירת לקוח חדש "${clientName}": ${insertError.message}`);
@@ -77,6 +83,7 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
         return null;
     }
     toast.success(`לקוח חדש "${clientName}" נוצר בהצלחה.`);
+    console.log('[BulkUploader] getOrCreateClient: Created new client ID:', newClient.id);
     return newClient.id;
   };
 
@@ -89,14 +96,17 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
     setUploading(true);
     const rootFolderName = selectedRootFolder[0].webkitRelativePath.split('/')[0] || "תיקייה ראשית";
     toast.info(`מתחיל עיבוד והעלאה עבור "${rootFolderName}"...`);
+    console.log('[BulkUploader] handleUpload: Starting upload process.');
 
     const { data: userSession, error: userError } = await supabase.auth.getUser();
     if (userError || !userSession?.user) {
       toast.error('שגיאת אימות. נסה להתחבר מחדש.');
+      console.error('[BulkUploader] handleUpload: User session error.', userError);
       setUploading(false);
       return;
     }
     const userId = userSession.user.id;
+    console.log('[BulkUploader] handleUpload: userId:', userId);
 
     const filesToUpload = await processFiles(selectedRootFolder);
     if (filesToUpload.length === 0 && selectedRootFolder.length > 0) {
@@ -118,8 +128,10 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
     let overallSuccess = true;
 
     for (const clientName in filesByClientName) {
-      toast.info(`מעבד את הלקוח: ${clientName}...`);
+      console.log('[BulkUploader] handleUpload: Processing clientName:', clientName);
       const clientId = await getOrCreateClient(clientName, userId);
+      console.log('[BulkUploader] handleUpload: For clientName:', clientName, 'obtained clientId:', clientId);
+
       if (!clientId) {
         overallSuccess = false;
         toast.error(`לא ניתן היה לקבל או ליצור ID עבור הלקוח "${clientName}". מדלג על קבצים אלו.`);
@@ -129,6 +141,7 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
       const clientFiles = filesByClientName[clientName];
       for (const { file, pathWithinClientFolder } of clientFiles) {
         const storagePathForSupabase = `${userId}/${clientId}/${pathWithinClientFolder}`;
+        console.log('[BulkUploader] handleUpload: Attempting to upload file:', file.name, 'to storagePath:', storagePathForSupabase, 'for clientId:', clientId, 'userId:', userId);
         
         try {
           const { error: uploadError } = await supabase.storage
@@ -136,26 +149,31 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
             .upload(storagePathForSupabase, file, { upsert: true });
 
           if (uploadError) {
+            console.error(`[BulkUploader] Error uploading ${file.name} to storage:`, uploadError);
             throw new Error(`שגיאה בהעלאת הקובץ "${file.name}" לאחסון: ${uploadError.message}`);
           }
 
-          const { error: dbError } = await supabase.from('client_files').insert({
+          const fileMetadata = {
             client_id: clientId,
             user_id: userId,
             file_name: file.name,
-            storage_path: storagePathForSupabase, // Store the new path
+            storage_path: storagePathForSupabase,
             file_type: file.type,
             file_size: file.size,
-          });
+          };
+          console.log('[BulkUploader] handleUpload: Attempting to insert file metadata to DB:', fileMetadata);
+          const { error: dbError } = await supabase.from('client_files').insert(fileMetadata);
 
           if (dbError) {
-            await supabase.storage.from('client_files_bucket').remove([storagePathForSupabase]); // Rollback storage
+            await supabase.storage.from('client_files_bucket').remove([storagePathForSupabase]); 
+            console.error('[BulkUploader] handleUpload: DB insert error for file:', file.name, dbError);
             throw new Error(`שגיאה בשמירת מידע על הקובץ "${file.name}": ${dbError.message}`);
           }
           // toast.success(`הקובץ "${pathWithinClientFolder}" (לקוח: ${clientName}) הועלה בהצלחה!`);
         } catch (error: any) {
           overallSuccess = false;
           toast.error(error.message || `אירעה שגיאה במהלך העלאת הקובץ "${file.name}" עבור הלקוח "${clientName}".`);
+          console.error('[BulkUploader] handleUpload: Catch block error for file:', file.name, error);
         }
       }
       toast.success(`הסתיימה העלאת הקבצים עבור הלקוח "${clientName}".`);
