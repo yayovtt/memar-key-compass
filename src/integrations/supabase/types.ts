@@ -91,7 +91,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_client_owner_id: {
+        Args: { p_client_id_text: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
