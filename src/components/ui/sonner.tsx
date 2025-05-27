@@ -1,14 +1,12 @@
-import { useTheme } from "next-themes"
-import { Toaster as Sonner, toast } from "sonner"
 
-type ToasterProps = React.ComponentProps<typeof Sonner>
+import { Toaster as SonnerPrimitive, toast } from "sonner" // Renamed import to SonnerPrimitive for clarity
 
-const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+type ToasterProps = React.ComponentProps<typeof SonnerPrimitive>
 
+const CustomSonnerToaster = ({ theme = "system", ...props }: ToasterProps) => {
   return (
-    <Sonner
-      theme={theme as ToasterProps["theme"]}
+    <SonnerPrimitive
+      theme={theme} // Use the theme prop (defaults to "system")
       className="toaster group"
       toastOptions={{
         classNames: {
@@ -26,4 +24,6 @@ const Toaster = ({ ...props }: ToasterProps) => {
   )
 }
 
-export { Toaster, toast }
+// Exporting with the original name 'Toaster' so App.tsx doesn't need to change its import alias
+export { CustomSonnerToaster as Toaster, toast }
+
