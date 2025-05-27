@@ -1,8 +1,8 @@
-
 import React from 'react';
 import Header from '@/components/layout/Header';
 import WidgetCard from '@/components/dashboard/WidgetCard';
 import { BarChart2, Users, Settings, ClipboardList, TrendingUp, Activity, UsersRound, ListChecks, Bell } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Index = () => {
   return (
@@ -33,11 +33,12 @@ const Index = () => {
                </button>
             </WidgetCard>
 
-            {/* New Widgets Start Here */}
             <WidgetCard title="לקוחות" icon={UsersRound} className="bg-gradient-to-br from-sky-500 to-cyan-600 text-white">
-              <div className="text-3xl font-bold">150</div>
-              <p className="text-sm text-sky-100">לקוחות רשומים</p>
-              <p className="text-xs mt-2 text-sky-200">(לחיצה על לקוח תאפשר גישה לקבצים - דורש חיבור Supabase)</p>
+              <Link to="/clients" className="block hover:bg-sky-700/50 p-2 -m-2 rounded-md transition-colors">
+                <div className="text-3xl font-bold">150</div>
+                <p className="text-sm text-sky-100">לקוחות רשומים (לחץ לניהול)</p>
+                <p className="text-xs mt-1 text-sky-200">(דורש חיבור Supabase ואימות משתמש)</p>
+              </Link>
             </WidgetCard>
 
             <WidgetCard title="משימות נוספות" icon={ListChecks} className="bg-gradient-to-br from-lime-500 to-emerald-600 text-white">
@@ -59,13 +60,10 @@ const Index = () => {
                  הצג הכל
                </button>
             </WidgetCard>
-            {/* New Widgets End Here */}
-
 
             <WidgetCard title="ביצועים" icon={TrendingUp} className="lg:col-span-2 bg-card text-card-foreground">
               <div className="text-2xl font-semibold">שיפור של 15%</div>
               <p className="text-sm text-muted-foreground">ברבעון האחרון, ביחס ליעדים.</p>
-              {/* You could add a small chart here later */}
             </WidgetCard>
 
             <WidgetCard title="יומן פעילות" icon={Activity} className="lg:col-span-2 bg-card text-card-foreground">
@@ -87,4 +85,3 @@ const Index = () => {
 };
 
 export default Index;
-
