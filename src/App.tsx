@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,16 +6,17 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import ClientsPage from "./pages/ClientsPage";
-import AuthPage from "./pages/AuthPage"; // Import AuthPage
+import ClientDetailPage from "./pages/ClientDetailPage"; // Import the new page
+import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import { supabase } from '@/integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
-import { LayoutDashboard } from 'lucide-react'; // For loading state
+import { LayoutDashboard } from 'lucide-react';
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [session, setSession] = useState<Session | null | undefined>(undefined); // undefined for initial loading state
+  const [session, setSession] = useState<Session | null | undefined>(undefined);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -63,6 +63,7 @@ const App = () => {
             <Route path="/auth" element={session ? <Navigate to="/" /> : <AuthPage />} />
             <Route path="/" element={session ? <Index /> : <Navigate to="/auth" />} />
             <Route path="/clients" element={session ? <ClientsPage /> : <Navigate to="/auth" />} />
+            <Route path="/clients/:clientId" element={session ? <ClientDetailPage /> : <Navigate to="/auth" />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

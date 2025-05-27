@@ -9,11 +9,55 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      client_files: {
+        Row: {
+          client_id: string
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          storage_path: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          storage_path: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          storage_path?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_files_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
           created_at: string
-          created_by_user_id: string | null
+          created_by_user_id: string
           email: string | null
           id: string
           name: string
@@ -23,7 +67,7 @@ export type Database = {
         Insert: {
           address?: string | null
           created_at?: string
-          created_by_user_id?: string | null
+          created_by_user_id?: string
           email?: string | null
           id?: string
           name: string
@@ -33,7 +77,7 @@ export type Database = {
         Update: {
           address?: string | null
           created_at?: string
-          created_by_user_id?: string | null
+          created_by_user_id?: string
           email?: string | null
           id?: string
           name?: string
