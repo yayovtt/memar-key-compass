@@ -4,9 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/layout/Header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Folder, Users, AlertTriangle, ServerCrash } from 'lucide-react';
+import { Folder, Users, AlertTriangle, ServerCrash, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button'; // Added
+import { Button } from '@/components/ui/button';
 
 interface Client {
   id: string;
