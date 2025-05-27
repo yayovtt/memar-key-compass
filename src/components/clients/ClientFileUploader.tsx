@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -16,13 +15,13 @@ interface ClientFileUploaderProps {
 // Removed FileWithRelativePath interface, will use built-in File type
 
 const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUploadSuccess }) => {
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // Changed to File[]
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      setSelectedFiles(Array.from(event.target.files)); // Directly use File
+      setSelectedFiles(Array.from(event.target.files));
     } else {
       setSelectedFiles([]);
     }
@@ -35,7 +34,6 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
     }
 
     setUploading(true);
-    // file.webkitRelativePath is an empty string for non-folder uploads.
     const isFolderUpload = selectedFiles.length > 0 && selectedFiles[0]?.webkitRelativePath && selectedFiles[0].webkitRelativePath.trim() !== "";
     const uploadTypeMessage = isFolderUpload ? 
       `תיקיית "${selectedFiles[0].webkitRelativePath.split('/')[0]}" (${selectedFiles.length} קבצים)` : 
@@ -45,24 +43,24 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
 
     let filesUploadedSuccessfully = 0;
 
+    const { data: userSession, error: userError } = await supabase.auth.getUser();
+    if (userError || !userSession?.user) {
+      toast.error('שגיאת אימות. נסה להתחבר מחדש.');
+      setUploading(false);
+      return;
+    }
+    const userId = userSession.user.id;
+
     for (const file of selectedFiles) {
       try {
-        const { data: userSession, error: userError } = await supabase.auth.getUser();
-        if (userError || !userSession?.user) {
-          toast.error('שגיאת אימות. נסה להתחבר מחדש.');
-          throw new Error('שגיאת אימות');
-        }
-        const userId = userSession.user.id;
-
         let storagePathForSupabase: string;
         
-        // Check webkitRelativePath: it's non-empty for folder contents
         if (file.webkitRelativePath && file.webkitRelativePath.trim() !== "") {
-          storagePathForSupabase = `${clientId}/${file.webkitRelativePath}`;
+          storagePathForSupabase = `${userId}/${clientId}/${file.webkitRelativePath}`;
         } else {
           const fileExtension = file.name.split('.').pop() || '';
           const uniqueFileName = `${uuidv4()}.${fileExtension}`;
-          storagePathForSupabase = `${clientId}/${uniqueFileName}`;
+          storagePathForSupabase = `${userId}/${clientId}/${uniqueFileName}`;
         }
         
         const { error: uploadError } = await supabase.storage

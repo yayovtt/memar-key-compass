@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -39,8 +38,6 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
           const pathWithinClientFolder = segments.slice(1).join('/');
           processedFiles.push({ file, clientName, pathWithinClientFolder });
         } else {
-          // This case (file directly in selected root, not in a client subfolder) might be ignored or handled differently.
-          // For now, we assume client folders are direct children of the selected root.
           toast.warning(`הקובץ "${file.name}" נמצא ישירות בתיקייה שנבחרה ולא בתוך תיקיית לקוח. המערכת תתעלם ממנו.`);
         }
       }
@@ -49,11 +46,11 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
   };
   
   const getOrCreateClient = async (clientName: string, userId: string): Promise<string | null> => {
-    // Check if client exists
     let { data: existingClient, error: fetchError } = await supabase
       .from('clients')
       .select('id')
       .eq('name', clientName)
+      .eq('created_by_user_id', userId) // Ensure client belongs to the current user if it exists
       .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116: 0 rows
@@ -65,10 +62,9 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
       return existingClient.id;
     }
 
-    // Create new client
     const { data: newClient, error: insertError } = await supabase
       .from('clients')
-      .insert({ name: clientName, created_by_user_id: userId }) // created_by_user_id might be auto by default policy
+      .insert({ name: clientName, created_by_user_id: userId })
       .select('id')
       .single();
 
@@ -111,7 +107,6 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
         return;
     }
 
-
     const filesByClientName: Record<string, { file: File, pathWithinClientFolder: string }[]> = {};
     filesToUpload.forEach(item => {
       if (!filesByClientName[item.clientName]) {
@@ -133,7 +128,7 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
 
       const clientFiles = filesByClientName[clientName];
       for (const { file, pathWithinClientFolder } of clientFiles) {
-        const storagePathForSupabase = `${clientId}/${pathWithinClientFolder}`;
+        const storagePathForSupabase = `${userId}/${clientId}/${pathWithinClientFolder}`;
         
         try {
           const { error: uploadError } = await supabase.storage
@@ -148,7 +143,7 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
             client_id: clientId,
             user_id: userId,
             file_name: file.name,
-            storage_path: storagePathForSupabase,
+            storage_path: storagePathForSupabase, // Store the new path
             file_type: file.type,
             file_size: file.size,
           });
@@ -157,7 +152,6 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
             await supabase.storage.from('client_files_bucket').remove([storagePathForSupabase]); // Rollback storage
             throw new Error(`שגיאה בשמירת מידע על הקובץ "${file.name}": ${dbError.message}`);
           }
-          // Individual success toast can be too noisy for bulk uploads. Consider a summary.
           // toast.success(`הקובץ "${pathWithinClientFolder}" (לקוח: ${clientName}) הועלה בהצלחה!`);
         } catch (error: any) {
           overallSuccess = false;
@@ -232,4 +226,3 @@ const BulkClientFolderUploader: React.FC<BulkClientFolderUploaderProps> = ({ onU
 };
 
 export default BulkClientFolderUploader;
-
