@@ -1,7 +1,7 @@
 import React from 'react';
 import Header from '@/components/layout/Header';
 import WidgetCard from '@/components/dashboard/WidgetCard';
-import { BarChart2, Users, Settings, ClipboardList, TrendingUp, Activity, UsersRound, ListChecks, Bell } from 'lucide-react';
+import { BarChart2, Users, Settings, ClipboardList, TrendingUp, Activity, UsersRound, ListChecks, Bell, Folders } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Index = () => {
@@ -38,6 +38,14 @@ const Index = () => {
                 <div className="text-3xl font-bold">150</div>
                 <p className="text-sm text-sky-100">לקוחות רשומים (לחץ לניהול)</p>
                 <p className="text-xs mt-1 text-sky-200">(דורש חיבור Supabase ואימות משתמש)</p>
+              </Link>
+            </WidgetCard>
+
+            <WidgetCard title="תיקיות לקוחות" icon={Folders} className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+              <Link to="/client-folders" className="block hover:bg-indigo-700/50 p-2 -m-2 rounded-md transition-colors">
+                <p className="text-lg font-semibold text-indigo-100">ניהול תיקיות</p>
+                <p className="text-sm text-indigo-200 mt-1">צפייה וארגון של כל תיקיות הלקוחות</p>
+                <p className="text-xs mt-2 text-indigo-300">(לחץ לפרטים נוספים)</p>
               </Link>
             </WidgetCard>
 
