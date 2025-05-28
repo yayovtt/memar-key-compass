@@ -8,12 +8,13 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import ClientsPage from "./pages/ClientsPage";
 import ClientDetailPage from "./pages/ClientDetailPage";
-import ClientFoldersPage from "./pages/ClientFoldersPage"; // Import the new page
+import ClientFoldersPage from "./pages/ClientFoldersPage";
+import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import { supabase } from '@/integrations/supabase/client';
 import type { Session } from '@supabase/supabase-js';
-import { LayoutDashboard, Loader2 } from 'lucide-react'; // Added Loader2
+import { LayoutDashboard, Loader2 } from 'lucide-react';
 
 const queryClient = new QueryClient();
 
@@ -49,7 +50,7 @@ const App = () => {
   if (loading || session === undefined) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-secondary">
-        <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" /> {/* Changed Icon */}
+        <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
         <p className="text-xl text-primary">טוען אפליקציה...</p>
       </div>
     );
@@ -63,10 +64,11 @@ const App = () => {
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={session ? <Navigate to="/" /> : <AuthPage />} />
+            <Route path="/auth/google/callback" element={<GoogleAuthCallback />} />
             <Route path="/" element={session ? <Index /> : <Navigate to="/auth" />} />
             <Route path="/clients" element={session ? <ClientsPage /> : <Navigate to="/auth" />} />
             <Route path="/clients/:clientId" element={session ? <ClientDetailPage /> : <Navigate to="/auth" />} />
-            <Route path="/client-folders" element={session ? <ClientFoldersPage /> : <Navigate to="/auth" />} /> {/* Add new route */}
+            <Route path="/client-folders" element={session ? <ClientFoldersPage /> : <Navigate to="/auth" />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

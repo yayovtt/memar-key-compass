@@ -6,8 +6,11 @@ import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/layout/Header';
 import ClientFileUploader from '@/components/clients/ClientFileUploader';
 import ClientFileList from '@/components/clients/ClientFileList';
+import GoogleDriveIntegration from '@/components/google/GoogleDriveIntegration';
+import GoogleCloudSyncPanel from '@/components/google/GoogleCloudSyncPanel';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowRight, User, Mail, Phone, MapPin, Loader2, AlertTriangle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -25,9 +28,9 @@ const fetchClientDetails = async (clientId: string): Promise<Client | null> => {
     .from('clients')
     .select('*')
     .eq('id', clientId)
-    .single(); // Use single as we expect one client or null
+    .single();
 
-  if (error && error.code !== 'PGRST116') { // PGRST116: " esattamente un risultato atteso, trovati 0" (no rows)
+  if (error && error.code !== 'PGRST116') {
     console.error('Error fetching client details:', error);
     throw new Error(error.message);
   }
@@ -40,7 +43,7 @@ const ClientDetailPage: React.FC = () => {
   const queryClient = useQueryClient();
 
   if (!clientId) {
-    navigate('/clients'); // Should not happen if route is set up correctly
+    navigate('/clients');
     return null;
   }
 
@@ -50,7 +53,6 @@ const ClientDetailPage: React.FC = () => {
   });
 
   const handleUploadSuccess = () => {
-    // Invalidate or refetch client files list
     queryClient.invalidateQueries({ queryKey: ['clientFiles', clientId] });
   };
 
@@ -178,8 +180,26 @@ const ClientDetailPage: React.FC = () => {
 
           {/* File Management Section */}
           <div className="md:col-span-2 space-y-6">
-            <ClientFileUploader clientId={clientId} onUploadSuccess={handleUploadSuccess} />
-            <ClientFileList clientId={clientId} />
+            <Tabs defaultValue="local" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="local">ניהול מקומי</TabsTrigger>
+                <TabsTrigger value="google-drive">Google Drive</TabsTrigger>
+                <TabsTrigger value="sync">סנכרון</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="local" className="space-y-6">
+                <ClientFileUploader clientId={clientId} onUploadSuccess={handleUploadSuccess} />
+                <ClientFileList clientId={clientId} />
+              </TabsContent>
+              
+              <TabsContent value="google-drive" className="space-y-6">
+                <GoogleDriveIntegration clientId={clientId} />
+              </TabsContent>
+              
+              <TabsContent value="sync" className="space-y-6">
+                <GoogleCloudSyncPanel clientId={clientId} />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </main>
