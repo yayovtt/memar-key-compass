@@ -59,7 +59,7 @@ const ClientFilesAccordion: React.FC<ClientFilesAccordionProps> = ({ clientsWith
   };
 
   const handleDownload = (file: ClientFile, event: React.MouseEvent) => {
-    event.stopPropagation(); // Prevent file opening when clicking download
+    event.stopPropagation();
     
     const { data } = supabase.storage
       .from('client_files_bucket')
@@ -80,7 +80,7 @@ const ClientFilesAccordion: React.FC<ClientFilesAccordionProps> = ({ clientsWith
   };
 
   return (
-    <Card>
+    <Card dir="rtl">
       <CardHeader>
         <CardTitle className="flex items-center">
           <Users className="ml-2 h-5 w-5" />

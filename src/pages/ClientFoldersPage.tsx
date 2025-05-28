@@ -39,7 +39,7 @@ const ClientFoldersPage: React.FC = () => {
   const shouldShowContent = !isLoadingClients && !clientsError && (clientsCount ?? 0) > 0 && !isLoadingAllFiles && !allFilesError;
 
   return (
-    <div className="min-h-screen bg-secondary flex flex-col">
+    <div className="min-h-screen bg-secondary flex flex-col" dir="rtl">
       <Header />
       <main className="flex-grow p-4 sm:p-6 lg:p-8 container mx-auto">
         <h1 className="text-3xl font-bold text-primary mb-8 text-center sm:text-right">תיקיות לקוחות</h1>
@@ -63,28 +63,32 @@ const ClientFoldersPage: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="google-drive" className="space-y-6">
-            <GoogleDriveIntegration />
+            <div dir="rtl">
+              <GoogleDriveIntegration />
+            </div>
           </TabsContent>
           
           <TabsContent value="sync" className="space-y-6">
-            <GoogleCloudSyncPanel />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">הגדרות סנכרון</h3>
-                <p className="text-sm text-muted-foreground">
-                  הסנכרון האוטומטי יעלה את כל הקבצים שלך לGoogle Drive וישמור אותם מסונכרנים.
-                  הקבצים יאורגנו בתיקיות לפי שמות הלקוחות.
-                </p>
-              </div>
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">יתרונות הסנכרון</h3>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• גיבוי אוטומטי בענן</li>
-                  <li>• גישה לקבצים מכל מקום</li>
-                  <li>• שיתוף קל עם לקוחות</li>
-                  <li>• ארגון אוטומטי בתיקיות</li>
-                  <li>• גרסאות קבצים</li>
-                </ul>
+            <div dir="rtl">
+              <GoogleCloudSyncPanel />
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">הגדרות סנכרון</h3>
+                  <p className="text-sm text-muted-foreground">
+                    הסנכרון האוטומטי יעלה את כל הקבצים שלך לGoogle Drive וישמור אותם מסונכרנים.
+                    הקבצים יאורגנו בתיקיות לפי שמות הלקוחות.
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">יתרונות הסנכרון</h3>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• גיבוי אוטומטי בענן</li>
+                    <li>• גישה לקבצים מכל מקום</li>
+                    <li>• שיתוף קל עם לקוחות</li>
+                    <li>• ארגון אוטומטי בתיקיות</li>
+                    <li>• גרסאות קבצים</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </TabsContent>

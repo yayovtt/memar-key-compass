@@ -57,7 +57,7 @@ const GoogleCloudSyncPanel: React.FC<GoogleCloudSyncPanelProps> = ({ clientId })
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full" dir="rtl">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">
