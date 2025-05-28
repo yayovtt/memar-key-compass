@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface GoogleDriveFile {
@@ -24,14 +23,29 @@ class GoogleDriveService {
   private apiKey: string = '';
 
   async initialize() {
-    // Get credentials from Supabase secrets
+    // Get credentials from Supabase Edge Function
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
-    // In production, these would be fetched from Supabase Edge Functions
-    // For now, we'll use them directly (they're stored as secrets)
-    this.clientId = process.env.GOOGLE_DRIVE_CLIENT_ID || '';
-    this.apiKey = process.env.GOOGLE_CLOUD_API_KEY || '';
+    try {
+      // Call edge function to get Google credentials
+      const { data, error } = await supabase.functions.invoke('get-google-credentials');
+      
+      if (error) {
+        console.error('Error getting Google credentials:', error);
+        throw new Error('Failed to get Google Drive credentials');
+      }
+      
+      this.clientId = data.clientId;
+      this.apiKey = data.apiKey;
+      
+      if (!this.clientId) {
+        throw new Error('Google Drive Client ID not configured');
+      }
+    } catch (error) {
+      console.error('Failed to initialize Google Drive service:', error);
+      throw error;
+    }
   }
 
   async authenticate(): Promise<boolean> {
