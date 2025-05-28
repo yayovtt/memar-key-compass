@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { UploadCloud, Loader2, FileUp } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
+import { sanitizeFilePath, sanitizeFileName } from '@/utils/fileNameUtils';
 
 interface ClientFileUploaderProps {
   clientId: string;
@@ -59,10 +60,13 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
         let storagePathForSupabase: string;
         
         if (file.webkitRelativePath && file.webkitRelativePath.trim() !== "") {
-          storagePathForSupabase = `${userId}/${clientId}/${file.webkitRelativePath}`;
+          // Sanitize the relative path
+          const sanitizedPath = sanitizeFilePath(file.webkitRelativePath);
+          storagePathForSupabase = `${userId}/${clientId}/${sanitizedPath}`;
         } else {
           const fileExtension = file.name.split('.').pop() || '';
-          const uniqueFileName = `${uuidv4()}.${fileExtension}`;
+          const sanitizedBaseName = sanitizeFileName(file.name.replace(`.${fileExtension}`, ''));
+          const uniqueFileName = `${sanitizedBaseName}_${uuidv4()}.${fileExtension}`;
           storagePathForSupabase = `${userId}/${clientId}/${uniqueFileName}`;
         }
         console.log('[ClientUploader] handleUpload: Calculated storagePathForSupabase:', storagePathForSupabase);

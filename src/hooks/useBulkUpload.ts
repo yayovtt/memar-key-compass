@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { processFiles } from '@/utils/fileProcessing';
 import { getOrCreateClient } from '@/utils/clientManagement';
+import { sanitizeFilePath } from '@/utils/fileNameUtils';
 import type { FileWithRelativeClientPath } from '@/types/bulkUpload';
 
 export const useBulkUpload = () => {
@@ -65,7 +66,9 @@ export const useBulkUpload = () => {
 
       const clientFiles = filesByClientName[clientName];
       for (const { file, pathWithinClientFolder } of clientFiles) {
-        const storagePathForSupabase = `${userId}/${clientId}/${pathWithinClientFolder}`;
+        // Sanitize the file path to make it safe for Supabase Storage
+        const sanitizedPath = sanitizeFilePath(pathWithinClientFolder);
+        const storagePathForSupabase = `${userId}/${clientId}/${sanitizedPath}`;
         console.log('[BulkUploader] handleUpload: Attempting to upload file:', file.name, 'to storagePath:', storagePathForSupabase, 'for clientId:', clientId, 'userId:', userId);
         
         try {
