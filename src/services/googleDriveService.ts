@@ -30,9 +30,17 @@ class GoogleDriveService {
 
     try {
       console.log('Calling get-google-credentials edge function...');
+      console.log('Supabase URL:', supabase.supabaseUrl);
+      console.log('User ID:', user.id);
       
       // Call edge function to get Google credentials
-      const { data, error } = await supabase.functions.invoke('get-google-credentials');
+      const { data, error } = await supabase.functions.invoke('get-google-credentials', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
+      
+      console.log('Edge function response:', { data, error });
       
       if (error) {
         console.error('Error getting Google credentials:', error);
@@ -40,6 +48,7 @@ class GoogleDriveService {
       }
       
       if (!data || !data.clientId) {
+        console.error('Invalid response from edge function:', data);
         throw new Error('No Google credentials returned from server');
       }
       
