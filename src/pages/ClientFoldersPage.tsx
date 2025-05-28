@@ -2,7 +2,7 @@
 import React from 'react';
 import Header from '@/components/layout/Header';
 import ClientFoldersPageStatus from '@/components/clients/ClientFoldersPageStatus';
-import ClientFoldersTable from '@/components/clients/ClientFoldersTable';
+import ClientFilesAccordion from '@/components/clients/ClientFilesAccordion';
 import BulkClientFolderUploader from '@/components/clients/BulkClientFolderUploader';
 import { useClientFoldersData } from '@/hooks/useClientFoldersData';
 
@@ -46,7 +46,7 @@ const ClientFoldersPage: React.FC = () => {
         {pageStatus}
 
         {shouldShowContent && (
-          <ClientFoldersTable 
+          <ClientFilesAccordion 
             clientsWithFolders={clientsWithFolders} 
             allFiles={allFiles || []}
           />

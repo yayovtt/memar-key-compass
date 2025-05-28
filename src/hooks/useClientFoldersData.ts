@@ -10,7 +10,11 @@ export interface Client {
 export interface ClientFile {
   id: string;
   client_id: string;
-  storage_path: string; // Example: USER_ID/CLIENT_ID/folder_name/file.txt
+  storage_path: string;
+  file_size: number | null;
+  file_name: string;
+  file_type: string | null;
+  created_at: string;
 }
 
 const fetchClients = async (): Promise<Client[]> => {
@@ -20,7 +24,7 @@ const fetchClients = async (): Promise<Client[]> => {
   const { data, error } = await supabase
     .from('clients')
     .select('id, name')
-    .eq('created_by_user_id', userSession.user.id) // Fetch only clients owned by the current user
+    .eq('created_by_user_id', userSession.user.id)
     .order('name', { ascending: true });
   if (error) throw error;
   return data || [];
@@ -30,12 +34,10 @@ const fetchAllClientFiles = async (): Promise<ClientFile[]> => {
   const { data: userSession } = await supabase.auth.getUser();
   if (!userSession?.user) return [];
 
-  // RLS policy on `client_files` table ensures user can only see files of clients they own.
-  // `get_client_owner_id(client_id)` checks ownership.
   const { data, error } = await supabase
         .from('client_files')
-        .select('id, client_id, storage_path')
-        .eq('user_id', userSession.user.id); // Ensure we only fetch files linked to the current user
+        .select('id, client_id, storage_path, file_size, file_name, file_type, created_at')
+        .eq('user_id', userSession.user.id);
   if (error) throw error;
   return data || [];
 };
