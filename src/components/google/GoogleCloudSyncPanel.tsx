@@ -7,7 +7,6 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Cloud, 
-  CloudSync, 
   PlayCircle, 
   PauseCircle, 
   RefreshCw, 
@@ -62,7 +61,7 @@ const GoogleCloudSyncPanel: React.FC<GoogleCloudSyncPanelProps> = ({ clientId })
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">
-            <CloudSync className="ml-2 h-6 w-6" />
+            <Cloud className="ml-2 h-6 w-6" />
             סנכרון Google Cloud
             {getSyncStatusBadge()}
           </div>
@@ -137,7 +136,7 @@ const GoogleCloudSyncPanel: React.FC<GoogleCloudSyncPanelProps> = ({ clientId })
               disabled={!syncStatus.isEnabled || isSyncing || !isAuthenticated}
               className="w-full"
             >
-              <CloudSync className="ml-2 h-4 w-4" />
+              <Cloud className="ml-2 h-4 w-4" />
               סנכרן כל הקבצים
             </Button>
           )}
