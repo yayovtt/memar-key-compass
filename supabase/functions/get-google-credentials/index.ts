@@ -8,18 +8,12 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  console.log(`${req.method} request received`);
-  console.log('Headers:', Object.fromEntries(req.headers.entries()));
-  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('Handling CORS preflight request');
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    console.log('Creating Supabase client...');
-    
     // Create a Supabase client with the Auth context of the logged in user.
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -31,37 +25,19 @@ serve(async (req) => {
       }
     )
 
-    console.log('Getting user from auth header...');
-    
     // Get the session or user object
     const authHeader = req.headers.get('Authorization')!
-    if (!authHeader) {
-      throw new Error('No authorization header provided')
-    }
-    
     const token = authHeader.replace('Bearer ', '')
-    const { data, error: userError } = await supabaseClient.auth.getUser(token)
-    
-    if (userError) {
-      console.error('Error getting user:', userError);
-      throw new Error(`Authentication failed: ${userError.message}`)
-    }
-    
+    const { data } = await supabaseClient.auth.getUser(token)
     const user = data.user
 
     if (!user) {
       throw new Error('User not authenticated')
     }
 
-    console.log('User authenticated:', user.id);
-
     // Get Google credentials from environment/secrets
-    console.log('Retrieving Google credentials from environment...');
     const clientId = Deno.env.get('GOOGLE_DRIVE_CLIENT_ID')
     const apiKey = Deno.env.get('GOOGLE_CLOUD_API_KEY')
-
-    console.log('Client ID available:', !!clientId);
-    console.log('API Key available:', !!apiKey);
 
     if (!clientId) {
       throw new Error('Google Drive Client ID not configured')
