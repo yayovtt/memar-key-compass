@@ -1,11 +1,10 @@
 
 import React from 'react';
 import Header from '@/components/layout/Header';
-import ClientFolderCard from '@/components/clients/ClientFolderCard';
 import ClientFoldersPageStatus from '@/components/clients/ClientFoldersPageStatus';
-import BulkClientFolderUploader from '@/components/clients/BulkClientFolderUploader'; // Import the new uploader
+import ClientFoldersTable from '@/components/clients/ClientFoldersTable';
+import BulkClientFolderUploader from '@/components/clients/BulkClientFolderUploader';
 import { useClientFoldersData } from '@/hooks/useClientFoldersData';
-// Loader2 is imported by ClientFoldersPageStatus if needed
 
 const ClientFoldersPage: React.FC = () => {
   const {
@@ -16,7 +15,7 @@ const ClientFoldersPage: React.FC = () => {
     isLoadingAllFiles,
     allFilesError,
     isClientsFetched,
-    // refetchClientsAndFiles, // Assuming useClientFoldersData exposes a refetch function or relies on query invalidation
+    allFiles,
   } = useClientFoldersData();
 
   const pageStatus = (
@@ -31,7 +30,6 @@ const ClientFoldersPage: React.FC = () => {
   );
 
   const handleBulkUploadComplete = () => {
-    // Data refetching is handled by query invalidation within BulkClientFolderUploader
     console.log('Bulk upload process finished, data should be refetching.');
   };
 
@@ -47,17 +45,11 @@ const ClientFoldersPage: React.FC = () => {
 
         {pageStatus}
 
-        {shouldShowContent && clientsWithFolders.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {clientsWithFolders.map(client => (
-                <ClientFolderCard key={client.id} client={client} />
-            ))}
-            </div>
-        )}
-         {shouldShowContent && clientsWithFolders.length === 0 && (clientsCount ?? 0) > 0 && (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">לא נמצאו תיקיות עבור הלקוחות הקיימים.</p>
-          </div>
+        {shouldShowContent && (
+          <ClientFoldersTable 
+            clientsWithFolders={clientsWithFolders} 
+            allFiles={allFiles || []}
+          />
         )}
       </main>
       <footer className="text-center p-4 text-sm text-muted-foreground border-t border-border">
@@ -68,4 +60,3 @@ const ClientFoldersPage: React.FC = () => {
 };
 
 export default ClientFoldersPage;
-

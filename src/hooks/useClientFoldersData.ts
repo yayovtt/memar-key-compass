@@ -98,8 +98,6 @@ export const useClientFoldersData = () => {
   const clientsWithFolders = useMemo(() => {
     if (!clients || !allFiles) return [];
     return clients.map(client => {
-      // Files are already filtered by user_id in fetchAllClientFiles due to RLS and explicit eq('user_id', ...)
-      // Here we just need to ensure we are linking files to the correct client based on client_id from the file record.
       const filesForThisClient = allFiles.filter(file => file.client_id === client.id);
       const folders = extractFolders(filesForThisClient, client.id);
       return { ...client, folders };
@@ -114,5 +112,6 @@ export const useClientFoldersData = () => {
     isLoadingAllFiles,
     allFilesError,
     isClientsFetched,
+    allFiles,
   };
 };
