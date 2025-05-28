@@ -43,6 +43,8 @@ serve(async (req) => {
       throw new Error('Google Drive Client ID not configured')
     }
 
+    console.log('Successfully retrieved Google credentials for user:', user.id)
+
     return new Response(
       JSON.stringify({
         clientId,

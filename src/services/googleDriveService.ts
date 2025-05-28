@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface GoogleDriveFile {
@@ -28,20 +29,25 @@ class GoogleDriveService {
     if (!user) throw new Error('User not authenticated');
 
     try {
+      console.log('Calling get-google-credentials edge function...');
+      
       // Call edge function to get Google credentials
       const { data, error } = await supabase.functions.invoke('get-google-credentials');
       
       if (error) {
         console.error('Error getting Google credentials:', error);
-        throw new Error('Failed to get Google Drive credentials');
+        throw new Error(`Failed to get Google Drive credentials: ${error.message}`);
+      }
+      
+      if (!data || !data.clientId) {
+        throw new Error('No Google credentials returned from server');
       }
       
       this.clientId = data.clientId;
       this.apiKey = data.apiKey;
       
-      if (!this.clientId) {
-        throw new Error('Google Drive Client ID not configured');
-      }
+      console.log('Successfully initialized Google Drive service with client ID:', this.clientId);
+      
     } catch (error) {
       console.error('Failed to initialize Google Drive service:', error);
       throw error;
