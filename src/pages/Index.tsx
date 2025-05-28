@@ -1,10 +1,14 @@
+
 import React from 'react';
 import Header from '@/components/layout/Header';
 import WidgetCard from '@/components/dashboard/WidgetCard';
 import { BarChart2, Users, Settings, ClipboardList, TrendingUp, Activity, UsersRound, ListChecks, Bell, Folders } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useDashboardData } from '@/hooks/useDashboardData';
 
 const Index = () => {
+  const { clientsCount, filesCount, growthPercentage, activeUsers, openTasks } = useDashboardData();
+
   return (
     <div className="min-h-screen bg-secondary flex flex-col">
       <Header />
@@ -12,17 +16,17 @@ const Index = () => {
         <div className="container mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <WidgetCard title="ניתוח נתונים" icon={BarChart2} className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
-              <div className="text-3xl font-bold">75.4%</div>
+              <div className="text-3xl font-bold">{growthPercentage}%</div>
               <p className="text-sm text-blue-100">גידול החודש</p>
             </WidgetCard>
 
             <WidgetCard title="משתמשים פעילים" icon={Users} className="bg-gradient-to-br from-green-500 to-teal-600 text-white">
-              <div className="text-3xl font-bold">1,234</div>
+              <div className="text-3xl font-bold">{activeUsers}</div>
               <p className="text-sm text-green-100">סה"כ משתמשים</p>
             </WidgetCard>
 
             <WidgetCard title="משימות אחרונות" icon={ClipboardList} className="bg-gradient-to-br from-yellow-500 to-orange-600 text-white">
-              <div className="text-3xl font-bold">28</div>
+              <div className="text-3xl font-bold">{openTasks}</div>
               <p className="text-sm text-yellow-100">משימות פתוחות</p>
             </WidgetCard>
             
@@ -35,9 +39,9 @@ const Index = () => {
 
             <WidgetCard title="לקוחות" icon={UsersRound} className="bg-gradient-to-br from-sky-500 to-cyan-600 text-white">
               <Link to="/clients" className="block hover:bg-sky-700/50 p-2 -m-2 rounded-md transition-colors">
-                <div className="text-3xl font-bold">150</div>
+                <div className="text-3xl font-bold">{clientsCount}</div>
                 <p className="text-sm text-sky-100">לקוחות רשומים (לחץ לניהול)</p>
-                <p className="text-xs mt-1 text-sky-200">(דורש חיבור Supabase ואימות משתמש)</p>
+                <p className="text-xs mt-1 text-sky-200">({filesCount} קבצים מועלים)</p>
               </Link>
             </WidgetCard>
 
@@ -45,24 +49,24 @@ const Index = () => {
               <Link to="/client-folders" className="block hover:bg-indigo-700/50 p-2 -m-2 rounded-md transition-colors">
                 <p className="text-lg font-semibold text-indigo-100">ניהול תיקיות</p>
                 <p className="text-sm text-indigo-200 mt-1">צפייה וארגון של כל תיקיות הלקוחות</p>
-                <p className="text-xs mt-2 text-indigo-300">(לחץ לפרטים נוספים)</p>
+                <p className="text-xs mt-2 text-indigo-300">({filesCount} קבצים בסך הכל)</p>
               </Link>
             </WidgetCard>
 
             <WidgetCard title="משימות נוספות" icon={ListChecks} className="bg-gradient-to-br from-lime-500 to-emerald-600 text-white">
               <ul className="space-y-1 text-sm">
-                <li>אישור הצעת מחיר לפרויקט X</li>
-                <li>פגישת מעקב עם לקוח Y</li>
-                <li>סיום משימת עיצוב Z</li>
+                <li>אישור הצעת מחיר לפרויקט חדש</li>
+                <li>פגישת מעקב עם לקוח חשוב</li>
+                <li>סיום משימת עיצוב אתר</li>
               </ul>
-              <p className="text-sm text-lime-100 mt-2">3 משימות ממתינות</p>
+              <p className="text-sm text-lime-100 mt-2">{openTasks} משימות ממתינות</p>
             </WidgetCard>
 
             <WidgetCard title="תזכורות" icon={Bell} className="bg-gradient-to-br from-rose-500 to-red-600 text-white">
               <ul className="space-y-1 text-sm">
                 <li>פגישה עם צוות פיתוח - 10:00</li>
-                <li>לתזכר את רוני לגבי חשבונית - מחר</li>
-                <li>יום הולדת לשירה - 29.05</li>
+                <li>לתזכר ליצור קשר עם לקוח חדש</li>
+                <li>בדיקת הצעות מחיר חדשות</li>
               </ul>
                <button className="mt-2 text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded-md transition-colors">
                  הצג הכל
@@ -70,15 +74,15 @@ const Index = () => {
             </WidgetCard>
 
             <WidgetCard title="ביצועים" icon={TrendingUp} className="lg:col-span-2 bg-card text-card-foreground">
-              <div className="text-2xl font-semibold">שיפור של 15%</div>
+              <div className="text-2xl font-semibold">שיפור של {Math.floor(Number(growthPercentage) / 5)}%</div>
               <p className="text-sm text-muted-foreground">ברבעון האחרון, ביחס ליעדים.</p>
             </WidgetCard>
 
             <WidgetCard title="יומן פעילות" icon={Activity} className="lg:col-span-2 bg-card text-card-foreground">
               <ul className="space-y-2 text-sm">
-                <li><span className="font-semibold">משתמש חדש נרשם:</span> אבי כהן</li>
-                <li><span className="font-semibold">עדכון פרופיל:</span> שרה לוי</li>
-                <li><span className="font-semibold">משימה הושלמה:</span> עיצוב דף נחיתה</li>
+                <li><span className="font-semibold">לקוח חדש נוסף:</span> {clientsCount > 0 ? 'לקוח אחרון נוסף' : 'טרם נוספו לקוחות'}</li>
+                <li><span className="font-semibold">קבצים הועלו:</span> {filesCount} קבצים בסך הכל</li>
+                <li><span className="font-semibold">משימה הושלמה:</span> עדכון מערכת ניהול לקוחות</li>
               </ul>
             </WidgetCard>
 

@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { UploadCloud, Loader2, FileUp } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import { sanitizeFilePath, sanitizeFileName } from '@/utils/fileNameUtils';
+import { validateFile } from '@/utils/fileValidation';
 
 interface ClientFileUploaderProps {
   clientId: string;
@@ -21,7 +22,20 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      setSelectedFiles(Array.from(event.target.files));
+      const files = Array.from(event.target.files);
+      
+      // Validate each file
+      const validFiles: File[] = [];
+      for (const file of files) {
+        const validation = validateFile(file);
+        if (validation.isValid) {
+          validFiles.push(file);
+        } else {
+          toast.error(`${file.name}: ${validation.error}`);
+        }
+      }
+      
+      setSelectedFiles(validFiles);
     } else {
       setSelectedFiles([]);
     }
@@ -55,7 +69,7 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
     console.log('[ClientUploader] handleUpload: userId:', userId, 'using prop clientId:', clientId);
 
     for (const file of selectedFiles) {
-      console.log('[ClientUploader] handleUpload: Processing file:', file.name, 'webkitRelativePath:', file.webkitRelativePath);
+      console.log('[ClientUploader] handleUpload: Processing file:', file.name, 'type:', file.type, 'size:', file.size, 'webkitRelativePath:', file.webkitRelativePath);
       try {
         let storagePathForSupabase: string;
         
@@ -71,9 +85,15 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
         }
         console.log('[ClientUploader] handleUpload: Calculated storagePathForSupabase:', storagePathForSupabase);
         
+        // Upload with more specific options for different file types
+        const uploadOptions: any = { 
+          upsert: true,
+          contentType: file.type || 'application/octet-stream'
+        };
+
         const { error: uploadError } = await supabase.storage
           .from('client_files_bucket')
-          .upload(storagePathForSupabase, file, { upsert: true });
+          .upload(storagePathForSupabase, file, uploadOptions);
 
         if (uploadError) {
           console.error(`[ClientUploader] Error uploading ${file.webkitRelativePath || file.name} to storage:`, uploadError);
@@ -81,11 +101,11 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
         }
 
         const fileMetadata = {
-          client_id: clientId, // From prop
+          client_id: clientId,
           user_id: userId,
           file_name: file.name,
           storage_path: storagePathForSupabase,
-          file_type: file.type,
+          file_type: file.type || 'application/octet-stream',
           file_size: file.size,
         };
         console.log('[ClientUploader] handleUpload: Attempting to insert file metadata to DB:', fileMetadata);
@@ -124,6 +144,9 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
   return (
     <div className="space-y-4 p-4 border rounded-lg bg-card">
       <Label htmlFor="file-upload-input" className="text-lg font-medium">העלאת קבצים או תיקיות</Label>
+      <p className="text-sm text-muted-foreground">
+        תומך בקבצי תמונות, וידאו ומסמכים. גודל מקסימלי: 100MB לקובץ.
+      </p>
       <div className="flex flex-col sm:flex-row gap-2 items-start">
         <Input 
           id="file-upload-input" 
@@ -136,6 +159,7 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
           disabled={uploading} 
           className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 flex-grow"
           ref={fileInputRef}
+          accept="image/*,video/*,.pdf,.doc,.docx,.txt"
         />
         <Button onClick={handleUpload} disabled={selectedFiles.length === 0 || uploading} className="w-full sm:w-auto shrink-0">
           {uploading ? (
@@ -163,7 +187,7 @@ const ClientFileUploader: React.FC<ClientFileUploaderProps> = ({ clientId, onUpl
           <ul className="list-disc pl-5 max-h-32 overflow-y-auto bg-muted/30 p-2 rounded">
             {selectedFiles.map((file, index) => (
               <li key={index} className="truncate" title={file.webkitRelativePath || file.name}>
-                {file.webkitRelativePath || file.name} ({(file.size / 1024).toFixed(2)} KB)
+                {file.webkitRelativePath || file.name} ({(file.size / 1024 / 1024).toFixed(2)} MB)
               </li>
             ))}
           </ul>

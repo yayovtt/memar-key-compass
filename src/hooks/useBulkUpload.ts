@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { processFiles } from '@/utils/fileProcessing';
 import { getOrCreateClient } from '@/utils/clientManagement';
 import { sanitizeFilePath } from '@/utils/fileNameUtils';
+import { validateFile } from '@/utils/fileValidation';
 import type { FileWithRelativeClientPath } from '@/types/bulkUpload';
 
 export const useBulkUpload = () => {
@@ -43,8 +44,19 @@ export const useBulkUpload = () => {
         return;
     }
 
+    // Validate files before upload
+    const validFilesToUpload: FileWithRelativeClientPath[] = [];
+    for (const item of filesToUpload) {
+      const validation = validateFile(item.file);
+      if (validation.isValid) {
+        validFilesToUpload.push(item);
+      } else {
+        toast.warning(`${item.file.name}: ${validation.error}`);
+      }
+    }
+
     const filesByClientName: Record<string, { file: File, pathWithinClientFolder: string }[]> = {};
-    filesToUpload.forEach(item => {
+    validFilesToUpload.forEach(item => {
       if (!filesByClientName[item.clientName]) {
         filesByClientName[item.clientName] = [];
       }
@@ -69,12 +81,18 @@ export const useBulkUpload = () => {
         // Sanitize the file path to make it safe for Supabase Storage
         const sanitizedPath = sanitizeFilePath(pathWithinClientFolder);
         const storagePathForSupabase = `${userId}/${clientId}/${sanitizedPath}`;
-        console.log('[BulkUploader] handleUpload: Attempting to upload file:', file.name, 'to storagePath:', storagePathForSupabase, 'for clientId:', clientId, 'userId:', userId);
+        console.log('[BulkUploader] handleUpload: Attempting to upload file:', file.name, 'type:', file.type, 'size:', file.size, 'to storagePath:', storagePathForSupabase, 'for clientId:', clientId, 'userId:', userId);
         
         try {
+          // Upload with more specific options for different file types
+          const uploadOptions: any = { 
+            upsert: true,
+            contentType: file.type || 'application/octet-stream'
+          };
+
           const { error: uploadError } = await supabase.storage
             .from('client_files_bucket')
-            .upload(storagePathForSupabase, file, { upsert: true });
+            .upload(storagePathForSupabase, file, uploadOptions);
 
           if (uploadError) {
             console.error(`[BulkUploader] Error uploading ${file.name} to storage:`, uploadError);
@@ -86,7 +104,7 @@ export const useBulkUpload = () => {
             user_id: userId,
             file_name: file.name,
             storage_path: storagePathForSupabase,
-            file_type: file.type,
+            file_type: file.type || 'application/octet-stream',
             file_size: file.size,
           };
           console.log('[BulkUploader] handleUpload: Attempting to insert file metadata to DB:', fileMetadata);
@@ -108,9 +126,9 @@ export const useBulkUpload = () => {
 
     setUploading(false);
 
-    if (overallSuccess && filesToUpload.length > 0) {
+    if (overallSuccess && validFilesToUpload.length > 0) {
       toast.success('כל הקבצים מתיקיות הלקוחות הועלו בהצלחה!');
-    } else if (filesToUpload.length > 0) {
+    } else if (validFilesToUpload.length > 0) {
       toast.warning('חלק מהקבצים לא הועלו. בדוק את ההודעות לפרטים.');
     }
     
