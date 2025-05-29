@@ -61,29 +61,40 @@ class GoogleDriveService {
       const currentOrigin = window.location.origin;
       console.log('Current origin for Google auth:', currentOrigin);
       
+      const redirectUri = `${currentOrigin}/auth/google/callback`;
+      console.log('Redirect URI:', redirectUri);
+      
       const authUrl = `https://accounts.google.com/oauth/authorize?` +
         `client_id=${this.clientId}&` +
-        `redirect_uri=${encodeURIComponent(currentOrigin + '/auth/google/callback')}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
         `scope=${encodeURIComponent('https://www.googleapis.com/auth/drive')}&` +
         `response_type=token&` +
+        `access_type=online&` +
         `include_granted_scopes=true`;
 
       console.log('Opening Google auth URL:', authUrl);
 
       // Open popup for authentication
-      const popup = window.open(authUrl, 'google-auth', 'width=500,height=600');
+      const popup = window.open(authUrl, 'google-auth', 'width=500,height=600,scrollbars=yes,resizable=yes');
       
+      if (!popup) {
+        throw new Error('Failed to open authentication popup. Please allow popups for this site.');
+      }
+
       return new Promise((resolve, reject) => {
         const checkClosed = setInterval(() => {
           if (popup?.closed) {
             clearInterval(checkClosed);
             console.log('Google auth popup was closed by user');
-            reject(new Error('Authentication cancelled'));
+            reject(new Error('Authentication cancelled by user'));
           }
         }, 1000);
 
-        window.addEventListener('message', (event) => {
+        // Listen for messages from the popup
+        const messageListener = (event: MessageEvent) => {
           console.log('Received message from popup:', event.data);
+          console.log('Event origin:', event.origin);
+          console.log('Window origin:', window.location.origin);
           
           if (event.origin !== window.location.origin) {
             console.log('Ignoring message from different origin:', event.origin);
@@ -92,6 +103,7 @@ class GoogleDriveService {
           
           if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
             clearInterval(checkClosed);
+            window.removeEventListener('message', messageListener);
             popup?.close();
             this.accessToken = event.data.accessToken;
             localStorage.setItem('google_drive_token', this.accessToken);
@@ -99,15 +111,28 @@ class GoogleDriveService {
             resolve(true);
           } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
             clearInterval(checkClosed);
+            window.removeEventListener('message', messageListener);
             popup?.close();
             console.error('Google auth error:', event.data.error);
             reject(new Error(event.data.error));
           }
-        });
+        };
+
+        window.addEventListener('message', messageListener);
+
+        // Timeout after 5 minutes
+        setTimeout(() => {
+          clearInterval(checkClosed);
+          window.removeEventListener('message', messageListener);
+          if (!popup?.closed) {
+            popup?.close();
+          }
+          reject(new Error('Authentication timeout'));
+        }, 300000);
       });
     } catch (error) {
       console.error('Google Drive authentication error:', error);
-      return false;
+      throw error;
     }
   }
 
