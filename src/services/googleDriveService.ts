@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface GoogleDriveFile {
@@ -58,12 +57,18 @@ class GoogleDriveService {
     try {
       await this.initialize();
       
+      // Get current origin
+      const currentOrigin = window.location.origin;
+      console.log('Current origin for Google auth:', currentOrigin);
+      
       const authUrl = `https://accounts.google.com/oauth/authorize?` +
         `client_id=${this.clientId}&` +
-        `redirect_uri=${encodeURIComponent(window.location.origin + '/auth/google/callback')}&` +
+        `redirect_uri=${encodeURIComponent(currentOrigin + '/auth/google/callback')}&` +
         `scope=${encodeURIComponent('https://www.googleapis.com/auth/drive')}&` +
         `response_type=token&` +
         `include_granted_scopes=true`;
+
+      console.log('Opening Google auth URL:', authUrl);
 
       // Open popup for authentication
       const popup = window.open(authUrl, 'google-auth', 'width=500,height=600');
@@ -72,22 +77,30 @@ class GoogleDriveService {
         const checkClosed = setInterval(() => {
           if (popup?.closed) {
             clearInterval(checkClosed);
+            console.log('Google auth popup was closed by user');
             reject(new Error('Authentication cancelled'));
           }
         }, 1000);
 
         window.addEventListener('message', (event) => {
-          if (event.origin !== window.location.origin) return;
+          console.log('Received message from popup:', event.data);
+          
+          if (event.origin !== window.location.origin) {
+            console.log('Ignoring message from different origin:', event.origin);
+            return;
+          }
           
           if (event.data.type === 'GOOGLE_AUTH_SUCCESS') {
             clearInterval(checkClosed);
             popup?.close();
             this.accessToken = event.data.accessToken;
             localStorage.setItem('google_drive_token', this.accessToken);
+            console.log('Google Drive authentication successful');
             resolve(true);
           } else if (event.data.type === 'GOOGLE_AUTH_ERROR') {
             clearInterval(checkClosed);
             popup?.close();
+            console.error('Google auth error:', event.data.error);
             reject(new Error(event.data.error));
           }
         });
